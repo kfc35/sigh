@@ -3,6 +3,8 @@ package sessions;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.UUID;
+import java.util.Date;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -16,10 +18,13 @@ import javax.servlet.http.HttpServletResponse;
  */
 @WebServlet("/BasicSessionServlet")
 public class BasicSessionServlet extends HttpServlet {
+	public static boolean DEBUG = true;
 	private static final long serialVersionUID = 1L;
 	private static final String DEFAULT_MESSAGE = "Hello, User!";
+	private static final long EXPIRY_TIME_FROM_CURRENT = 1000 * 120; //2 minutes
 	private static ConcurrentHashMap<String, CS5300PROJ1SESSION> sessionDataTable = 
 			new ConcurrentHashMap();
+	private static Thread terminator = new Thread(new Terminator(sessionDataTable));
        
     /**
      * @see HttpServlet#HttpServlet()
@@ -27,21 +32,61 @@ public class BasicSessionServlet extends HttpServlet {
     public BasicSessionServlet() {
         super();
         // TODO Auto-generated constructor stub
+        terminator.start();
     }
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
+		/*Process session information if applicable*/
 		Cookie[] cookies = request.getCookies();
 		String message = null;
-		if (cookies != null) { //This is a first client request
-			message = DEFAULT_MESSAGE;
+		long end = 0;
+		
+		boolean foundCookie = false;
+		if (cookies != null) {
+			for (int i = 0; i < cookies.length; i++) {
+				if (cookies[i].getName().equals(CS5300PROJ1SESSION.COOKIE_NAME)) {
+					String sessionId = cookies[i].getValue();
+					CS5300PROJ1SESSION session = sessionDataTable.get(sessionId);
+					if (session == null) { 
+						/*this can happen if you stop the servlet, clearing the
+						  concurrent hashmap, and then run it again -> Eclipse still has
+						  the cookie! Make a new cookie now!*/
+						break;
+					}
+					
+					message = session.getMessage();
+					end = session.getEnd();
+					foundCookie = true;
+					if (DEBUG) {
+						System.out.println("Fetched Existing Session: " + session.toString());
+					}
+				}
+			}
 		}
-		else { //Redisplay Session Msg, Update session expiration time
+		if (!foundCookie) { //we have to create the session
+			UUID uuid = UUID.randomUUID();	//128 bits
+			message = DEFAULT_MESSAGE;			
+			int version = 0; //32 bits
+			//current time + 2 minutes
+			end = (new Date()).getTime() + EXPIRY_TIME_FROM_CURRENT; //64 bits
+			//TODO location metadata will be appended later.
 			
+			StringBuilder sb = new StringBuilder();
+			sb.append(uuid.toString()).append(";");
+			sb.append(version).append(";");
+			sb.append(message).append(";");
+			sb.append(end);
+			CS5300PROJ1SESSION session = new CS5300PROJ1SESSION(sb.toString());
+			if (DEBUG) {
+				System.out.println("Created a New Session: " + session.toString());
+			}
+			sessionDataTable.put(uuid.toString(), session);
+			response.addCookie(new Cookie(CS5300PROJ1SESSION.COOKIE_NAME, uuid.toString()));
 		}
+		
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
 		out.println
@@ -54,6 +99,8 @@ public class BasicSessionServlet extends HttpServlet {
 							"<p>Simple servlet for testing.</p>\n" +
 							"</body></html>"
 							);
+		
+		//TODO the "cookie" sent in the response
 	}
 
 	/**
