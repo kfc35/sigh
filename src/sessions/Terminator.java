@@ -20,6 +20,7 @@ public class Terminator implements Runnable {
 	public void run() {
 		try{
 			this.wait(1000);
+			System.out.println("Terminator check");
 			
 			HashMap<String, CS5300PROJ1SESSION> dup = new HashMap<String, CS5300PROJ1SESSION> (sessionDataTable);
 			for (Entry<String, CS5300PROJ1SESSION> e: dup.entrySet()) {

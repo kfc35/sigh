@@ -6,6 +6,7 @@ public class CS5300PROJ1SESSION extends Cookie {
  
 	/** Default */
 	private static final long serialVersionUID = 1L;
+	public static String COOKIE_NAME = "CS5300PROJ1SESSION";
 
 	//TODO 512 byte restriction on session state value
 	private String sessionId;
@@ -21,7 +22,7 @@ public class CS5300PROJ1SESSION extends Cookie {
 	}
 	
 	public CS5300PROJ1SESSION(String s) {
-		super(s, s);
+		super(COOKIE_NAME, s);
 		String[] args = s.split(";");
 		sessionId = args[0];
 		setVersion(Integer.parseInt(args[1]));
