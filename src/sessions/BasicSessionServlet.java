@@ -25,18 +25,14 @@ public class BasicSessionServlet extends HttpServlet {
 			new ConcurrentHashMap<String, CS5300PROJ1SESSION>();
 	
 	public static int servletNum = 0;
-	private int myNum;
-	private int numSessions = 0;
 	private static final long EXPIRY_TIME_FROM_CURRENT = 1000 * 120; //2 minutes
-			new ConcurrentHashMap();
-	private static Thread terminator = new Thread(new Terminator(sessionDataTable));
+	private Thread terminator = new Thread(new Terminator(sessionDataTable));
        
     /**
      * @see HttpServlet#HttpServlet()
      */
     public BasicSessionServlet() {
         super();
-        myNum = servletNum++;
         // TODO Auto-generated constructor stub
         terminator.start();
     }
@@ -53,9 +49,9 @@ public class BasicSessionServlet extends HttpServlet {
 		
 		boolean foundCookie = false;
 		if (cookies != null) {
-			for (int i = 0; i < cookies.length; i++) {
-				if (cookies[i].getName().equals(CS5300PROJ1SESSION.COOKIE_NAME)) {
-					String sessionId = cookies[i].getValue();
+			for (Cookie c : cookies) {
+				if (c.getName().equals(CS5300PROJ1SESSION.COOKIE_NAME)) {
+					String sessionId = c.getValue();
 					session = sessionDataTable.get(sessionId);
 					if (session == null) { 
 						/*this can happen if you stop the servlet, clearing the
@@ -75,23 +71,20 @@ public class BasicSessionServlet extends HttpServlet {
 		}
 		if (!foundCookie) { //we have to create the session
 			UUID uuid = UUID.randomUUID();	//128 bits
-			message = DEFAULT_MESSAGE;			
-			int version = 0; //32 bits
-			//current time + 2 minutes
+			message = DEFAULT_MESSAGE;			//current time + 2 minutes
 			end = (new Date()).getTime() + EXPIRY_TIME_FROM_CURRENT; //64 bits
 			//TODO location metadata will be appended later.
 			
-			StringBuilder sb = new StringBuilder();
-			sb.append(uuid.toString()).append(";");
-			sb.append(version).append(";");
-			sb.append(message).append(";");
-			sb.append(end);
-			CS5300PROJ1SESSION session = new CS5300PROJ1SESSION(sb.toString());
+			session = new CS5300PROJ1SESSION(uuid.toString(), message, end);
 			if (DEBUG) {
 				System.out.println("Created a New Session: " + session.toString());
 			}
 			sessionDataTable.put(uuid.toString(), session);
 			response.addCookie(new Cookie(CS5300PROJ1SESSION.COOKIE_NAME, uuid.toString()));
+		} else { // TODO: Kevin this is in the wrong closure, but I need to go
+			session.incrementVersion();
+			session.setEnd((new Date()).getTime() + EXPIRY_TIME_FROM_CURRENT);
+			//TODO UUID??? for add cookie
 		}
 		
 		response.setContentType("text/html");
@@ -102,11 +95,10 @@ public class BasicSessionServlet extends HttpServlet {
 							"<html>\n" +
 							"<head><title>kfc35 - ss2249 - hhc39 - CS5300 - Proj 1a</title></head>\n" +
 							"<body>\n" +
-							"<h1>" + cookie.getMessage() + "</h1>\n" +
+							"<h1>" + session.getMessage() + "</h1>\n" +
 							"<p>Simple servlet for testing.</p>\n" +
 							"</body></html>"
 							);
-		response.addCookie(cookie);
 	}
 
 	/**
@@ -114,17 +106,6 @@ public class BasicSessionServlet extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-	}
-	
-	public String getSessionId() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(myNum).append(' ');
-		sb.append(numSessions);
-		return sb.toString();
-	}
-	
-	public void incrementNumSessions() {
-		numSessions++;
 	}
 
 }
