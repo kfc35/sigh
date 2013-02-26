@@ -41,7 +41,6 @@ public class BasicSessionServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		CS5300PROJ1SESSION[] cookies = (CS5300PROJ1SESSION[]) request.getCookies();
-		String message = null;
 		CS5300PROJ1SESSION cookie = null;
 		if (cookies != null) { //This is a first client request
 			incrementNumSessions();
