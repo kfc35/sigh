@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Servlet implementation class BasicSessionServlet
  */
-@WebServlet("/BasicSessionServlet")
+@WebServlet("/")
 public class BasicSessionServlet extends HttpServlet {
 	public static boolean DEBUG = true;
 	private static final long serialVersionUID = 1L;
@@ -60,21 +60,25 @@ public class BasicSessionServlet extends HttpServlet {
 						  the cookie! Make a new cookie now!*/
 						break;
 					}
+					session.incrementVersion();
+					session.setEnd((new Date()).getTime() + EXPIRY_TIME_FROM_CURRENT);
 					
 					message = session.getMessage();
 					end = session.getEnd();
 					foundCookie = true;
 					cookieToSend = c;
 					if (DEBUG) {
-						System.out.println("Fetched Existing Session: " + session.toString());
+						System.out.println("Fetched Existing Session & Updated: " + session.toString());
 					}
+					//TODO updating the old cookie sent back to the client with a
+					// new expiration date? idk how this is possible.
 				}
 			}
 		}
 		if (!foundCookie) { //we have to create the session
 			UUID uuid = UUID.randomUUID();	//128 bits
-			message = DEFAULT_MESSAGE;			//current time + 2 minutes
-			end = (new Date()).getTime() + EXPIRY_TIME_FROM_CURRENT; //64 bits
+			message = DEFAULT_MESSAGE;
+			end = (new Date()).getTime() + EXPIRY_TIME_FROM_CURRENT; //64 bits, current time + 2 minutes
 			//TODO location metadata will be appended later.
 			
 			session = new CS5300PROJ1SESSION(uuid.toString(), message, end);
