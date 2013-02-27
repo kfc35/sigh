@@ -44,6 +44,7 @@ public class BasicSessionServlet extends HttpServlet {
 		CS5300PROJ1SESSION session = null;
 		/*Process session information if applicable*/
 		Cookie[] cookies = request.getCookies();
+		Cookie cookieToSend = null;
 		String message = null;
 		long end = 0;
 		
@@ -63,6 +64,7 @@ public class BasicSessionServlet extends HttpServlet {
 					message = session.getMessage();
 					end = session.getEnd();
 					foundCookie = true;
+					cookieToSend = c;
 					if (DEBUG) {
 						System.out.println("Fetched Existing Session: " + session.toString());
 					}
@@ -80,12 +82,12 @@ public class BasicSessionServlet extends HttpServlet {
 				System.out.println("Created a New Session: " + session.toString());
 			}
 			sessionDataTable.put(uuid.toString(), session);
-			response.addCookie(new Cookie(CS5300PROJ1SESSION.COOKIE_NAME, uuid.toString()));
+			cookieToSend = new Cookie(CS5300PROJ1SESSION.COOKIE_NAME, uuid.toString());
 		} else { // TODO: Kevin this is in the wrong closure, but I need to go
 			session.incrementVersion();
 			session.setEnd((new Date()).getTime() + EXPIRY_TIME_FROM_CURRENT);
-			//TODO UUID??? for add cookie
 		}
+		response.addCookie(cookieToSend);
 		
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();

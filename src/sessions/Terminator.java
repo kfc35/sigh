@@ -17,7 +17,7 @@ public class Terminator implements Runnable {
 	}
 
 	@Override
-	public void run() {
+	public synchronized void run() {
 		try{
 			this.wait(1000);
 			System.out.println("Terminator check");
