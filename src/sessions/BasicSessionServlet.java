@@ -2,10 +2,13 @@ package sessions;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.UUID;
 import java.util.Date;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.Cookie;
@@ -16,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Servlet implementation class BasicSessionServlet
  */
-@WebServlet("/")
+@WebServlet("/") //MUST BE THE ROOT
 public class BasicSessionServlet extends HttpServlet {
 	public static boolean DEBUG = true;
 	private static final long serialVersionUID = 1L;
@@ -66,12 +69,10 @@ public class BasicSessionServlet extends HttpServlet {
 					message = session.getMessage();
 					end = session.getEnd();
 					foundCookie = true;
-					cookieToSend = c;
+					cookieToSend = new Cookie(CS5300PROJ1SESSION.COOKIE_NAME, sessionId);
 					if (DEBUG) {
 						System.out.println("Fetched Existing Session & Updated: " + session.toString());
 					}
-					//TODO updating the old cookie sent back to the client with a
-					// new expiration date? idk how this is possible.
 				}
 			}
 		}
@@ -87,24 +88,18 @@ public class BasicSessionServlet extends HttpServlet {
 			}
 			sessionDataTable.put(uuid.toString(), session);
 			cookieToSend = new Cookie(CS5300PROJ1SESSION.COOKIE_NAME, uuid.toString());
-		} else { // TODO: Kevin this is in the wrong closure, but I need to go
-			session.incrementVersion();
-			session.setEnd((new Date()).getTime() + EXPIRY_TIME_FROM_CURRENT);
 		}
+		cookieToSend.setMaxAge((int) (EXPIRY_TIME_FROM_CURRENT / 1000));
 		response.addCookie(cookieToSend);
 		
-		response.setContentType("text/html");
-		PrintWriter out = response.getWriter();
-		out.println
-		(
-					"<!DOCTYPE html>\n" +
-							"<html>\n" +
-							"<head><title>kfc35 - ss2249 - hhc39 - CS5300 - Proj 1a</title></head>\n" +
-							"<body>\n" +
-							"<h1>" + session.getMessage() + "</h1>\n" +
-							"<p>Simple servlet for testing.</p>\n" +
-							"</body></html>"
-							);
+		//TODO which address?
+		getServletContext().setAttribute("message", message);
+		getServletContext().setAttribute("address", request.getRemoteAddr() + ":" + request.getRemotePort());
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		getServletContext().setAttribute("expires", dateFormat.format(new Date(end)));
+		
+		RequestDispatcher rd = request.getRequestDispatcher("/first.jsp");
+		rd.forward(request, response);
 	}
 
 	/**

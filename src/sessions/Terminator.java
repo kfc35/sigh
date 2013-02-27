@@ -18,6 +18,7 @@ public class Terminator implements Runnable {
 
 	@Override
 	public synchronized void run() {
+		//TODO while true?
 		try{
 			this.wait(1000);
 			System.out.println("Terminator check");
