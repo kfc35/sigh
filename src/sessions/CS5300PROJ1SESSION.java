@@ -1,5 +1,7 @@
 package sessions;
 
+import java.util.Date;
+
 import javax.servlet.http.Cookie;
 
 public class CS5300PROJ1SESSION extends Cookie {
@@ -19,6 +21,10 @@ public class CS5300PROJ1SESSION extends Cookie {
 		message = m;
 		end = e;
 		this.setVersion(0);
+	}
+	
+	public CS5300PROJ1SESSION(String session, String m) {
+		this(session, m, (new Date()).getTime() + BasicSessionServlet.EXPIRY_TIME_FROM_CURRENT);
 	}
 	
 	public CS5300PROJ1SESSION(String s) {

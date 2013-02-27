@@ -9,11 +9,11 @@
 <body>
 <h1><%=getServletContext().getAttribute("message")%></h1>
 <!-- The BasicSessionServlet is mapped to "/", so that's why action is "" -->
-<form method="get" action=""><input type="submit" name="Replace" value="Replace"/>
+<form method="post" action=""><input type="submit" name="Replace" value="Replace"/>
 	<input type="text" name="newMessage" size="40" maxLength="100" /></form>
 	<!-- TODO look into maxLength for the message -->
 <form method="get" action=""><input type="submit" name="Refresh" value="Refresh"/></form>
-<form method="get" action=""><input type="submit" name="Log out" value="Log out"/></form>
+<form method="post" action=""><input type="submit" name="Log out" value="Log out"/></form>
 <p>Session on <%=getServletContext().getAttribute("address")%></p>
 <p>Expires <%=getServletContext().getAttribute("expires")%></p>
 </body>

@@ -18,19 +18,20 @@ public class Terminator implements Runnable {
 
 	@Override
 	public synchronized void run() {
-		//TODO while true?
-		try{
-			this.wait(1000);
-			System.out.println("Terminator check");
-			
-			HashMap<String, CS5300PROJ1SESSION> dup = new HashMap<String, CS5300PROJ1SESSION> (sessionDataTable);
-			for (Entry<String, CS5300PROJ1SESSION> e: dup.entrySet()) {
-				CS5300PROJ1SESSION cookie = e.getValue();
-				if (cookie.getEnd() < System.currentTimeMillis()) {
-					sessionDataTable.remove(e.getKey());
+		while(true) {
+			try{
+				this.wait(5000);
+				System.out.println("Terminator check");
+				
+				HashMap<String, CS5300PROJ1SESSION> dup = new HashMap<String, CS5300PROJ1SESSION> (sessionDataTable);
+				for (Entry<String, CS5300PROJ1SESSION> e: dup.entrySet()) {
+					CS5300PROJ1SESSION cookie = e.getValue();
+					if (cookie.getEnd() < System.currentTimeMillis()) {
+						sessionDataTable.remove(e.getKey());
+					}
 				}
+			} catch (InterruptedException e) {
 			}
-		} catch (InterruptedException e) {
 		}
 	}
 
