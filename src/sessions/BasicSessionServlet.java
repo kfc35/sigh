@@ -58,7 +58,11 @@ public class BasicSessionServlet extends HttpServlet {
 						/*this can happen if you stop the servlet, clearing the
 						  concurrent hashmap, and then run it again -> Eclipse still has
 						  the cookie! Make a new cookie now!*/
-						break;
+
+						// The case when expired cookies still come back
+						session = createSession(DEFAULT_MESSAGE);
+						populateJSP(request, response, session); 
+						return;
 					}
 					session.incrementVersion();
 					session.setEnd((new Date()).getTime() + EXPIRY_TIME_FROM_CURRENT);
@@ -97,7 +101,14 @@ public class BasicSessionServlet extends HttpServlet {
 						/*this can happen if you stop the servlet, clearing the
 						  concurrent hashmap, and then run it again -> Eclipse still has
 						  the cookie! Make a new cookie now!*/
-						break;
+						
+						// The case when expired cookies still come back
+						session = createSession(DEFAULT_MESSAGE);
+						if (request.getParameter("newMessage") != null) {
+							session.setMessage(request.getParameter("newMessage"));
+						}
+						populateJSP(request, response, session); 
+						return;
 					}
 
 					while(params.hasMoreElements()) {
@@ -110,7 +121,7 @@ public class BasicSessionServlet extends HttpServlet {
 
 							session.setMessage(message);
 							if (DEBUG) {
-								System.out.println("Fetched Existing Session & Updated: " + session.toString());
+								System.out.println("Replaced Session & Updated: " + session.toString());
 							}
 
 							populateJSP(request, response, session); 
@@ -127,6 +138,14 @@ public class BasicSessionServlet extends HttpServlet {
 				}
 			}
 		}
+		
+		// The case when expired cookies still come back
+		session = createSession(DEFAULT_MESSAGE);
+		if (request.getParameter("newMessage") != null) {
+			session.setMessage(request.getParameter("newMessage"));
+		}
+		populateJSP(request, response, session); 
+		return;
 	}
 
 	/**

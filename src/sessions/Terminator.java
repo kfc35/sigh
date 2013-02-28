@@ -25,8 +25,9 @@ public class Terminator implements Runnable {
 				
 				HashMap<String, CS5300PROJ1SESSION> dup = new HashMap<String, CS5300PROJ1SESSION> (sessionDataTable);
 				for (Entry<String, CS5300PROJ1SESSION> e: dup.entrySet()) {
-					CS5300PROJ1SESSION cookie = e.getValue();
-					if (cookie.getEnd() < System.currentTimeMillis()) {
+					CS5300PROJ1SESSION session = e.getValue();
+					if (session.getEnd() < System.currentTimeMillis()) {
+						System.out.println("Removing the session: "+ session.getSessionId());
 						sessionDataTable.remove(e.getKey());
 					}
 				}
