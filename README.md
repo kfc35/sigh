@@ -1,5 +1,8 @@
 kfc35m ss2249, hhc39
 
+To run:
+  Deploy the .war file into the tomcat7 webapps directory
+
 Our code is separated into two components:
 The java code:
 	Terminator - a thread that removes expired session from the table

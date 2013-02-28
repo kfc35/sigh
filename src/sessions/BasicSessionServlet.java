@@ -28,7 +28,7 @@ public class BasicSessionServlet extends HttpServlet {
 			new ConcurrentHashMap<String, CS5300PROJ1SESSION>();
 
 	public static int servletNum = 0;
-	public static final long EXPIRY_TIME_FROM_CURRENT = 1000 * 6; //2 minutes
+	public static final long EXPIRY_TIME_FROM_CURRENT = 1000 * 120; //2 minutes
 	private Thread terminator = new Thread(new Terminator(sessionDataTable));
 
 	/**
