@@ -1,8 +1,7 @@
 package sessions;
 
-import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 /**
  * 
  * @author sweet
@@ -20,18 +19,28 @@ public class CS5300PROJ1Terminator implements Runnable {
 	public synchronized void run() {
 		while(true) {
 			try{
-				this.wait(1000 * 120); // Runs every 2 minutes
+				this.wait(1000 * 120); // Runs every 2 minutes 
 				System.out.println("Terminator check");
-				
-				HashMap<String, CS5300PROJ1Session> dup = new HashMap<String, CS5300PROJ1Session> (sessionDataTable);
-				for (Entry<String, CS5300PROJ1Session> e: dup.entrySet()) {
-					CS5300PROJ1Session session = e.getValue();
-					if (session.getEnd() < System.currentTimeMillis()) {
-						System.out.println("Removing the session: "+ session.getSessionId());
-						sessionDataTable.remove(e.getKey());
+
+				// Synchronizes the sessionDataTable so that the access and removes don't conflict
+				synchronized (sessionDataTable) {
+					// For every entry in the hashtable, remove all expired sessions 
+					for (Entry<String, CS5300PROJ1Session> e: sessionDataTable.entrySet()) {
+						CS5300PROJ1Session session = e.getValue();
+						
+						if (session.getEnd() < System.currentTimeMillis()) {
+							if (CS5300PROJ1Servlet.DEBUG) {
+								System.out.println("Terminator removing the session: " 
+										+ session.getSessionId());
+							}
+							sessionDataTable.remove(e.getKey());
+						}
 					}
 				}
 			} catch (InterruptedException e) {
+				if (CS5300PROJ1Servlet.DEBUG) {
+					System.out.println("Terminator erroed in waiting.");
+				}
 			}
 		}
 	}

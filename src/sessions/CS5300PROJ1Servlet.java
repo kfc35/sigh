@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet("/") //MUST BE THE ROOT
 public class CS5300PROJ1Servlet extends HttpServlet {
 
+	//ENUM is used to determine the actions of each request
 	private enum REQUEST{REFRESH, REPLACE, LOGOUT}
 
 	public static boolean DEBUG = false;
@@ -31,8 +32,7 @@ public class CS5300PROJ1Servlet extends HttpServlet {
 	private ConcurrentHashMap<String, CS5300PROJ1Session> sessionDataTable = 
 			new ConcurrentHashMap<String, CS5300PROJ1Session>();
 
-	public static int servletNum = 0;
-	public static final long EXPIRY_TIME_FROM_CURRENT = 1000 * 120; //2 minutes
+	public static final long EXPIRY_TIME_FROM_CURRENT = 1000 * 120; //2 minutes 
 	private Thread terminator = new Thread(new CS5300PROJ1Terminator(sessionDataTable));
 
 	/**
@@ -40,20 +40,25 @@ public class CS5300PROJ1Servlet extends HttpServlet {
 	 */
 	public CS5300PROJ1Servlet() {
 		super();
-		servletNum++;
 		terminator.start();
 	}
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 * 
+	 * Only an original GET request or a Refresh will call this
 	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+			throws ServletException, IOException {
+		String location = request.getRemoteAddr() + ":" + request.getRemotePort();
 		CS5300PROJ1Session session = null;
 		/*Process session information if applicable*/
 
-		session = execute(request.getCookies(), REQUEST.REFRESH, null);
-		if (null == session) { //we have to create the session
-			session = createSession(DEFAULT_MESSAGE);
+		synchronized (sessionDataTable) {
+			session = execute(request.getCookies(), REQUEST.REFRESH, null);
+			if (null == session) { //we have to create the session
+				session = createSession(DEFAULT_MESSAGE, location);
+			}
 		}
 
 		populateJSP(REQUEST.REFRESH, request, response, session); 
@@ -61,6 +66,7 @@ public class CS5300PROJ1Servlet extends HttpServlet {
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 * Only a logout and replace
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
@@ -68,7 +74,9 @@ public class CS5300PROJ1Servlet extends HttpServlet {
 		Enumeration<String> params = request.getParameterNames();
 		String message = DEFAULT_MESSAGE;
 		REQUEST type = REQUEST.LOGOUT;
+		String location = request.getRemoteAddr() + ":" + request.getRemotePort();
 
+		// If this request is a REPLACE request.
 		while(params.hasMoreElements()) {
 			String param = (String) params.nextElement();
 			if (param.equals("newMessage")) {
@@ -76,64 +84,19 @@ public class CS5300PROJ1Servlet extends HttpServlet {
 				type = REQUEST.REPLACE;
 			}
 		}
+		synchronized (sessionDataTable) {
+			session = execute(request.getCookies(), type, message);
+			if (null == session && type == REQUEST.REPLACE) {
 
-		session = execute(request.getCookies(), type, message);
-		if (null == session && type == REQUEST.REPLACE) {
-
-			// The case when expired cookies still come back
-			session = createSession(DEFAULT_MESSAGE);
-			session.setMessage(message);
+				// The case when expired cookies still come back
+				session = createSession(DEFAULT_MESSAGE, location);
+				session.setMessage(message);
+			}
 		}
 		populateJSP(type, request, response, session); 
 	}
 
-	/**
-	 * 
-	 * @param m - message
-	 * Create a new session and add it to the session table
-	 * @return session
-	 */
-	private synchronized CS5300PROJ1Session createSession(String m) {
-		UUID uuid = UUID.randomUUID();
-		CS5300PROJ1Session session = new CS5300PROJ1Session(uuid.toString(), m);
-		if (DEBUG) {
-			System.out.println("Created a New Session: " + session.toString());
-		}
-		sessionDataTable.put(uuid.toString(), session);
-		return session;
-	}
-
-	/**
-	 * 
-	 * @param request
-	 * @param response
-	 * @param session
-	 * @throws IOException
-	 * @throws ServletException
-	 * 
-	 * A function that's brought out from the mess that was GET and POST
-	 * 
-	 */
-	private void populateJSP(REQUEST type, HttpServletRequest request, HttpServletResponse response, CS5300PROJ1Session session) 
-			throws IOException, ServletException {
-		if (type == REQUEST.LOGOUT) {
-			PrintWriter out = response.getWriter();
-			out.println("Bye");
-		} else {
-			Cookie cookieToSend = new Cookie(CS5300PROJ1Session.COOKIE_NAME, session.getSessionId());
-			cookieToSend.setMaxAge((int) (EXPIRY_TIME_FROM_CURRENT / 1000));
-			response.addCookie(cookieToSend);
-
-			getServletContext().setAttribute("message", session.getMessage());
-			getServletContext().setAttribute("address", request.getRemoteAddr() + ":" + request.getRemotePort());
-			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-			getServletContext().setAttribute("expires", dateFormat.format(new Date(session.getEnd())));
-
-			RequestDispatcher rd = request.getRequestDispatcher("/CS5300PROJ1index.jsp");
-			rd.forward(request, response);
-		}
-	}
-
+	
 	/**
 	 * 
 	 * @param cookies from the httprequest
@@ -142,12 +105,12 @@ public class CS5300PROJ1Servlet extends HttpServlet {
 	 * @param message that should replace the current message
 	 * @return whether such a session exists or not
 	 */
-	private synchronized CS5300PROJ1Session execute(Cookie[] cookies, REQUEST type, String message) {
+	private CS5300PROJ1Session execute(Cookie[] cookies, REQUEST type, String message) {
 		CS5300PROJ1Session session = null;
 		if (cookies != null) {
 			for (Cookie c : cookies) {
 				if (c.getName().equals(CS5300PROJ1Session.COOKIE_NAME)) {
-					String sessionId = c.getValue();
+					String sessionId = c.getValue().split(":")[0];
 					session = sessionDataTable.get(sessionId);
 					if (session == null) { 
 						/*this can happen if you stop the servlet, clearing the
@@ -155,6 +118,7 @@ public class CS5300PROJ1Servlet extends HttpServlet {
 						  the cookie! Make a new cookie now!*/
 						break;
 					}
+					
 					// If logout, then just remove the session
 					if (type == REQUEST.LOGOUT) {
 						sessionDataTable.remove(sessionId);
@@ -175,4 +139,66 @@ public class CS5300PROJ1Servlet extends HttpServlet {
 
 		return session;
 	}
+	
+
+	/**
+	 * 
+	 * @param m - message
+	 * Create a new session and add it to the session table
+	 * @return session
+	 */
+	private CS5300PROJ1Session createSession(String m, String location) {
+		UUID uuid = UUID.randomUUID();
+		CS5300PROJ1Session session = new CS5300PROJ1Session(uuid.toString(), 
+				m, location);
+		if (DEBUG) {
+			System.out.println("Created a New Session: " + session.toString());
+		}
+		sessionDataTable.put(uuid.toString(), session);
+		return session;
+	}
+	
+
+	/**
+	 * 
+	 * @param request
+	 * @param response
+	 * @param session
+	 * @throws IOException
+	 * @throws ServletException
+	 * 
+	 * A function that's brought out from the mess that was GET and POST
+	 * 
+	 */
+	private void populateJSP(REQUEST type, HttpServletRequest request, 
+			HttpServletResponse response, CS5300PROJ1Session session) 
+			throws IOException, ServletException {
+		Cookie cookieToSend;
+		if (type == REQUEST.LOGOUT) {
+			
+			// Creates a cookie to send to the client to erase all past cookies
+			cookieToSend = new Cookie(CS5300PROJ1Session.COOKIE_NAME, "");
+			cookieToSend.setMaxAge(0);
+			response.addCookie(cookieToSend);
+			PrintWriter out = response.getWriter();
+			out.println("Bye");
+		} else {
+
+			cookieToSend = new Cookie(CS5300PROJ1Session.COOKIE_NAME, 
+					session.getSessionId() + ":" + session.getVersion() + ":" + 
+					session.getLocation());
+			cookieToSend.setMaxAge((int) (EXPIRY_TIME_FROM_CURRENT / 1000));
+			response.addCookie(cookieToSend);
+
+			// Set all the JSP attributes
+			getServletContext().setAttribute("message", session.getMessage());
+			getServletContext().setAttribute("address", session.getLocation());
+			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+			getServletContext().setAttribute("expires", dateFormat.format(new Date(session.getEnd())));
+
+			RequestDispatcher rd = request.getRequestDispatcher("/CS5300PROJ1index.jsp");
+			rd.forward(request, response);
+		}
+	}
+
 }

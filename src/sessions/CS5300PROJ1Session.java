@@ -14,8 +14,9 @@ public class CS5300PROJ1Session extends Cookie {
 	private String sessionId;
 	private String message;
 	private long end;
+	private String location;
 	
-	public CS5300PROJ1Session(String session, String m, long e) {
+	public CS5300PROJ1Session(String session, String m, long e, String l) {
 		super(session, m);
 		sessionId = session;
 		if (m.length() > 450) {
@@ -25,10 +26,12 @@ public class CS5300PROJ1Session extends Cookie {
 		}
 		end = e;
 		this.setVersion(0);
+		this.location = l;
 	}
-	
-	public CS5300PROJ1Session(String session, String m) {
-		this(session, m, (new Date()).getTime() + CS5300PROJ1Servlet.EXPIRY_TIME_FROM_CURRENT);
+
+	public CS5300PROJ1Session(String session, String m, String l) {
+		this(session, m, (new Date()).getTime() + CS5300PROJ1Servlet.EXPIRY_TIME_FROM_CURRENT
+				, l);
 	}
 	
 	public CS5300PROJ1Session(String s) {
@@ -38,6 +41,7 @@ public class CS5300PROJ1Session extends Cookie {
 		setVersion(Integer.parseInt(args[1]));
 		message = args[2];
 		end = Long.parseLong(args[3]);
+		location = args[4];
 	}
 	
 	
@@ -69,6 +73,15 @@ public class CS5300PROJ1Session extends Cookie {
 		return end;
 	}
 	
+
+	public String getLocation() {
+		return location;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
+	}
+	
 	public void incrementVersion() {
 		this.setVersion(this.getVersion() + 1);
 	}
@@ -78,7 +91,8 @@ public class CS5300PROJ1Session extends Cookie {
 		sb.append(sessionId).append(";");
 		sb.append(getVersion()).append(";");
 		sb.append(message).append(";");
-		sb.append(end);
+		sb.append(end).append(";");
+		sb.append(location);
 		return sb.toString();
 	}
 }
