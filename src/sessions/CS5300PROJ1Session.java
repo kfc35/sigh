@@ -16,14 +16,11 @@ public class CS5300PROJ1Session extends Cookie {
 	private long end;
 	private String location;
 	
-	public CS5300PROJ1Session(String session, String m, long e, String l) {
+	public CS5300PROJ1Session(String session, String m, long e, 
+			String l) {
 		super(session, m);
 		sessionId = session;
-		if (m.length() > 450) {
-			message = m.substring(0, 450);
-		} else {
-			message = m;
-		}
+		message = m;
 		end = e;
 		this.setVersion(0);
 		this.location = l;
@@ -88,11 +85,11 @@ public class CS5300PROJ1Session extends Cookie {
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(sessionId).append(";");
-		sb.append(getVersion()).append(";");
-		sb.append(message).append(";");
-		sb.append(end).append(";");
-		sb.append(location);
-		return sb.toString();
+		sb.append(sessionId).append("_");
+		sb.append(getVersion()).append("_");
+		sb.append(end).append("_");
+		sb.append(location.toString()).append("_");
+		sb.append(message);
+		return sb.toString().substring(0, 512);
 	}
 }
