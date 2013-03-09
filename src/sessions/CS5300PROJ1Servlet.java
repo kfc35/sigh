@@ -183,7 +183,7 @@ public class CS5300PROJ1Servlet extends HttpServlet {
 			PrintWriter out = response.getWriter();
 			out.println("Bye");
 		} else {
-
+			//TODO make this _ and not ":"
 			cookieToSend = new Cookie(CS5300PROJ1Session.COOKIE_NAME, 
 					session.getSessionId() + ":" + session.getVersion() + ":" + 
 					session.getLocation());
