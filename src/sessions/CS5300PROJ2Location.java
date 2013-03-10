@@ -1,12 +1,12 @@
 package sessions;
 
-public class CS5300PROJ1Location {
+public class CS5300PROJ2Location {
 	private String primaryIP;
 	private String primaryPort;
 	private String backupIP;
 	private String backupPort;
 	
-	public CS5300PROJ1Location(String pIP, String pPort, String bIP, String bPort) {
+	public CS5300PROJ2Location(String pIP, String pPort, String bIP, String bPort) {
 		primaryIP = pIP;
 		primaryPort = pPort;
 		backupIP = bIP;

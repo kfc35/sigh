@@ -1,12 +1,12 @@
 package sessions;
 
-public class CS5300PROJ1SessionId {
+public class CS5300PROJ2SessionId {
 	
 	private String sessionId;
 	private String originIP;
 	private String originPort; //UDP port
 	
-	public CS5300PROJ1SessionId(String sId, String oIP, String oPort) {
+	public CS5300PROJ2SessionId(String sId, String oIP, String oPort) {
 		sessionId = sId;
 		originIP = oIP;
 		originPort = oPort;
